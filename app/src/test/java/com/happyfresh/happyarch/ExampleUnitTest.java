@@ -1,4 +1,4 @@
-package com.mywarta.happyarch;
+package com.happyfresh.happyarch;
 
 import org.junit.Test;
 

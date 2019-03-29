@@ -1,1 +1,1 @@
-include ':app', ':happyarchitecture'
+include ':app', ':happyarch'
