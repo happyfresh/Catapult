@@ -10,4 +10,6 @@ import java.lang.annotation.Target;
 public @interface Subscribe {
 
     Class<?>[] value();
+
+    boolean single() default false;
 }
