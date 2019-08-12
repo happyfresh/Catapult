@@ -5,22 +5,22 @@ import android.support.annotation.NonNull;
 public class NewInstanceProvider {
 
     public static <T> T create(Class<T> tClass) {
-        return create(tClass, new DefaultFactory<>());
+        return create(tClass, new DefaultFactory());
     }
 
-    public static <T> T create(Class<T> tClass, @NonNull Factory<T> factory) {
+    public static <T> T create(Class<T> tClass, @NonNull Factory factory) {
         return factory.create(tClass);
     }
 
-    public interface Factory<T> {
+    public interface Factory {
 
-        T create(Class<T> tClass);
+        <T> T create(Class<T> tClass);
     }
 
-    public static class DefaultFactory<T> implements Factory<T> {
+    public static class DefaultFactory implements Factory {
 
         @Override
-        public T create(Class<T> tClass) {
+        public <T> T create(Class<T> tClass) {
             try {
                 return tClass.newInstance();
             } catch (InstantiationException e) {

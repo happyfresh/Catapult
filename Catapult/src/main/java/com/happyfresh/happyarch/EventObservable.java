@@ -17,7 +17,8 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
-import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.Subject;
 
 public class EventObservable implements LifecycleObserver {
 
@@ -25,10 +26,10 @@ public class EventObservable implements LifecycleObserver {
     protected static Map<LifecycleOwner, EventObservable> eventObservables = new HashMap<>();
 
     @NonNull
-    protected Map<Class<?>, PublishSubject<? extends Event>> publishSubjects = new HashMap<>();
+    protected Map<Class<?>, Subject<? extends Event>> subjects = new HashMap<>();
 
     @NonNull
-    protected LifecycleOwner lifecycleOwner;
+    private LifecycleOwner lifecycleOwner;
 
     public EventObservable(@NonNull LifecycleOwner lifecycleOwner) {
         this.lifecycleOwner = lifecycleOwner;
@@ -118,7 +119,7 @@ public class EventObservable implements LifecycleObserver {
             Class<? extends Event> eventClass = (Class<? extends Event>) method
                     .getParameterTypes()[parameterLength - 1];
 
-            if (!eventClass.isInstance(event)) {
+            if (!eventClass.equals(event.getClass())) {
                 continue;
             }
 
@@ -155,11 +156,11 @@ public class EventObservable implements LifecycleObserver {
 
     @SuppressWarnings("unchecked")
     public <T extends Event> void emit(@NonNull Class<?> clazz, @NonNull T event) {
-        PublishSubject<T> publishSubject = ((PublishSubject<T>) getPublishSubject(clazz));
+        Subject<T> subject = ((Subject<T>) getSubject(clazz));
         try {
-            publishSubject.onNext(event);
+            subject.onNext(event);
         } catch (Exception e) {
-            publishSubject.onError(e);
+            subject.onError(e);
         }
     }
 
@@ -178,27 +179,32 @@ public class EventObservable implements LifecycleObserver {
 
     @SuppressWarnings("unchecked")
     public <T extends Event> Observable<T> getObservable(@NonNull Class<?> clazz) {
-        return (Observable<T>) getPublishSubject(clazz).serialize();
+        return (Observable<T>) getSubject(clazz).serialize();
     }
 
-    private PublishSubject<? extends Event> getPublishSubject(@NonNull Class<?> clazz) {
-        PublishSubject<? extends Event> publishSubject = publishSubjects.get(clazz);
-        if (publishSubject == null) {
-            publishSubject = createPublishSubject(clazz);
+    @NonNull
+    public LifecycleOwner getLifecycleOwner() {
+        return lifecycleOwner;
+    }
+
+    private Subject<? extends Event> getSubject(@NonNull Class<?> clazz) {
+        Subject<? extends Event> subject = subjects.get(clazz);
+        if (subject == null) {
+            subject = createSubject(clazz);
         }
 
-        return publishSubject;
+        return subject;
     }
 
-    private <T extends Event> PublishSubject<T> createPublishSubject(@NonNull Class<?> clazz) {
-        PublishSubject<T> publishSubject = PublishSubject.create();
-        publishSubjects.put(clazz, publishSubject);
-        return publishSubject;
+    private <T extends Event> Subject<T> createSubject(@NonNull Class<?> clazz) {
+        Subject<T> subject = BehaviorSubject.create();
+        subjects.put(clazz, subject);
+        return subject;
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     private void onDestroy() {
-        for (Map.Entry<Class<?>, PublishSubject<? extends Event>> entry : publishSubjects.entrySet()) {
+        for (Map.Entry<Class<?>, Subject<? extends Event>> entry : subjects.entrySet()) {
             entry.getValue().onComplete();
         }
 
