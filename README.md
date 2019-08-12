@@ -23,6 +23,6 @@ allprojects {
 
 ```gradle
 dependencies {
-	 implementation 'com.github.happyfresh:catapult:1.4'
+	 implementation 'com.github.happyfresh:catapult:1.5'
 }
 ```
