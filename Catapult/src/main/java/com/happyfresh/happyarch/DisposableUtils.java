@@ -22,7 +22,7 @@ public class DisposableUtils {
             try {
                 field.setAccessible(true);
                 dispose((Disposable) field.get(target));
-            } catch (IllegalAccessException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
