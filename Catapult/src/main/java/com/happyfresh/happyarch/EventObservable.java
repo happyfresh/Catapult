@@ -6,6 +6,7 @@ import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.LifecycleOwner;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.subjects.BehaviorSubject;
@@ -25,11 +27,18 @@ public class EventObservable implements LifecycleObserver {
     @NonNull
     protected static Map<LifecycleOwner, EventObservable> eventObservables = new HashMap<>();
 
+    @Nullable
+    protected static EventObservable lastEventObservable;
+
     @NonNull
     protected Map<Class<?>, Subject<? extends Event>> subjects = new HashMap<>();
 
     @NonNull
     private LifecycleOwner lifecycleOwner;
+
+    private Map<Object, CompositeDisposable> compositeDisposableMap = new HashMap<>();
+
+    private boolean rebindSubscriberOnResume = false;
 
     public EventObservable(@NonNull LifecycleOwner lifecycleOwner) {
         this.lifecycleOwner = lifecycleOwner;
@@ -41,6 +50,7 @@ public class EventObservable implements LifecycleObserver {
         if (eventObserver == null) {
             eventObserver = new EventObservable(lifecycleOwner);
             eventObservables.put(lifecycleOwner, eventObserver);
+            lastEventObservable = eventObserver;
         }
 
         return eventObserver;
@@ -52,9 +62,20 @@ public class EventObservable implements LifecycleObserver {
         }
     }
 
+    public static <T extends Event> void emitLast(Class<?> clazz, T event) {
+        if (lastEventObservable != null) {
+            lastEventObservable.emit(clazz, event);
+        }
+    }
+
     public static <T> void bindSubscriber(T target, EventObservable eventObservable) {
+        bindSubscriber(target, eventObservable, false);
+    }
+
+    public static <T> void bindSubscriber(T target, EventObservable eventObservable, boolean subscribeNormalOnly) {
         Map<Class, List<Method>> methodMaps = new HashMap<>();
         Map<Class, List<Method>> singleMethodMaps = new HashMap<>();
+        Map<Class, List<Method>> keepAliveMethodMaps = new HashMap<>();
         for (Method method : target.getClass().getMethods()) {
             if (!method.isAnnotationPresent(Subscribe.class) || method.getParameterTypes().length == 0 || method
                     .getParameterTypes().length > 2) {
@@ -66,18 +87,29 @@ public class EventObservable implements LifecycleObserver {
             if (subscribe.single()) {
                 putMethodIntoMaps(singleMethodMaps, subscribe, method);
             }
+            else if (subscribe.keepAlive()) {
+                putMethodIntoMaps(keepAliveMethodMaps, subscribe, method);
+            }
             else {
                 putMethodIntoMaps(methodMaps, subscribe, method);
             }
         }
 
         for (Map.Entry<Class, List<Method>> entry : methodMaps.entrySet()) {
-            eventObservable.subscribe(entry.getKey(), event -> {
+            eventObservable.addDisposable(target, eventObservable.subscribe(entry.getKey(), event -> {
                 invokeMethod(entry, event, target);
-            });
+            }));
         }
 
-        if (!singleMethodMaps.isEmpty()) {
+        if (!keepAliveMethodMaps.isEmpty() && !subscribeNormalOnly) {
+            for (Map.Entry<Class, List<Method>> entry : keepAliveMethodMaps.entrySet()) {
+                eventObservable.subscribe(entry.getKey(), event -> {
+                    invokeMethod(entry, event, target);
+                });
+            }
+        }
+
+        if (!singleMethodMaps.isEmpty() && !subscribeNormalOnly) {
             Map<Class, Disposable> disposableMaps = new HashMap<>();
             for (Map.Entry<Class, List<Method>> entry : singleMethodMaps.entrySet()) {
                 disposableMaps.put(entry.getKey(), eventObservable.subscribe(entry.getKey(), event -> {
@@ -200,6 +232,49 @@ public class EventObservable implements LifecycleObserver {
         Subject<T> subject = BehaviorSubject.create();
         subjects.put(clazz, subject);
         return subject;
+    }
+
+    private Disposable addDisposable(Object target, Disposable disposable) {
+        CompositeDisposable compositeDisposable = compositeDisposableMap.get(target);
+        if (compositeDisposable == null) {
+            compositeDisposable = new CompositeDisposable();
+            compositeDisposableMap.put(target, compositeDisposable);
+        }
+
+        compositeDisposable.add(disposable);
+
+        return disposable;
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    private void onResume() {
+        if (!rebindSubscriberOnResume) {
+            return;
+        }
+
+        for (Map.Entry<Object, CompositeDisposable> entry : compositeDisposableMap.entrySet()) {
+            bindSubscriber(entry.getKey(), this, true);
+        }
+
+        rebindSubscriberOnResume = false;
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    private void onPause() {
+        for (Map.Entry<Object, CompositeDisposable> entry : compositeDisposableMap.entrySet()) {
+            entry.getValue().dispose();
+            entry.setValue(new CompositeDisposable());
+        }
+        rebindSubscriberOnResume = true;
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    private void onStop() {
+        for (Map.Entry<Object, CompositeDisposable> entry : compositeDisposableMap.entrySet()) {
+            entry.getValue().dispose();
+            entry.setValue(new CompositeDisposable());
+        }
+        rebindSubscriberOnResume = true;
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
