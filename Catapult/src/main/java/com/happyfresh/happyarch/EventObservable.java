@@ -24,6 +24,8 @@ import io.reactivex.subjects.Subject;
 
 public class EventObservable implements LifecycleObserver {
 
+    private static final IgnoreEvent IGNORE_EVENT = new IgnoreEvent();
+
     @NonNull
     protected static Map<LifecycleOwner, EventObservable> eventObservables = new HashMap<>();
 
@@ -205,7 +207,9 @@ public class EventObservable implements LifecycleObserver {
     @SuppressWarnings("unchecked")
     public <T extends Event> Disposable subscribe(@NonNull Class<?> clazz, @NonNull Consumer<T> onNext,
                                                   @NonNull Consumer<Throwable> onError) {
-        return ((Observable<T>) getObservable(clazz)).observeOn(AndroidSchedulers.mainThread())
+        return ((Observable<T>) getObservable(clazz))
+                .filter(event -> !event.equals(IGNORE_EVENT))
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(onNext, onError);
     }
 
@@ -259,20 +263,28 @@ public class EventObservable implements LifecycleObserver {
         rebindSubscriberOnResume = false;
     }
 
+    @SuppressWarnings("unchecked")
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     private void onPause() {
         for (Map.Entry<Object, CompositeDisposable> entry : compositeDisposableMap.entrySet()) {
             entry.getValue().dispose();
             entry.setValue(new CompositeDisposable());
         }
+        for (Map.Entry<Class<?>, Subject<? extends Event>> entry : subjects.entrySet()) {
+            ((Subject<Event>) entry.getValue()).onNext((IGNORE_EVENT));
+        }
         rebindSubscriberOnResume = true;
     }
 
+    @SuppressWarnings("unchecked")
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     private void onStop() {
         for (Map.Entry<Object, CompositeDisposable> entry : compositeDisposableMap.entrySet()) {
             entry.getValue().dispose();
             entry.setValue(new CompositeDisposable());
+        }
+        for (Map.Entry<Class<?>, Subject<? extends Event>> entry : subjects.entrySet()) {
+            ((Subject<Event>) entry.getValue()).onNext((IGNORE_EVENT));
         }
         rebindSubscriberOnResume = true;
     }
