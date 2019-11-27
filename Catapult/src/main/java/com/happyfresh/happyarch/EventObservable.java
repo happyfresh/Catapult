@@ -29,9 +29,6 @@ public class EventObservable implements LifecycleObserver {
     @NonNull
     protected static Map<LifecycleOwner, EventObservable> eventObservables = new HashMap<>();
 
-    @Nullable
-    protected static EventObservable lastEventObservable;
-
     @NonNull
     protected Map<Class<?>, Subject<? extends Event>> subjects = new HashMap<>();
 
@@ -52,7 +49,6 @@ public class EventObservable implements LifecycleObserver {
         if (eventObserver == null) {
             eventObserver = new EventObservable(lifecycleOwner);
             eventObservables.put(lifecycleOwner, eventObserver);
-            lastEventObservable = eventObserver;
         }
 
         return eventObserver;
@@ -61,12 +57,6 @@ public class EventObservable implements LifecycleObserver {
     public static <T extends Event> void emitAll(Class<?> clazz, T event) {
         for (Map.Entry<LifecycleOwner, EventObservable> entry : eventObservables.entrySet()) {
             entry.getValue().emit(clazz, event);
-        }
-    }
-
-    public static <T extends Event> void emitLast(Class<?> clazz, T event) {
-        if (lastEventObservable != null) {
-            lastEventObservable.emit(clazz, event);
         }
     }
 
