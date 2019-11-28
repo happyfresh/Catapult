@@ -229,6 +229,10 @@ public class EventObservable implements LifecycleObserver {
     }
 
     private Disposable addDisposable(Object target, Disposable disposable) {
+        if (compositeDisposableMap == null) {
+            compositeDisposableMap = new HashMap<>();
+        }
+
         CompositeDisposable compositeDisposable = compositeDisposableMap.get(target);
         if (compositeDisposable == null) {
             compositeDisposable = new CompositeDisposable();
