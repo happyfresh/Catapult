@@ -12,4 +12,6 @@ public @interface Subscribe {
     Class<?>[] value();
 
     boolean single() default false;
+
+    boolean keepAlive() default false;
 }

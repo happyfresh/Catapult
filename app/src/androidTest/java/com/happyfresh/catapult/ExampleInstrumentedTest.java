@@ -1,4 +1,4 @@
-package com.happyfresh.happyarch;
+package com.happyfresh.catapult;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
