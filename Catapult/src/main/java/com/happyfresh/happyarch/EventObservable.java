@@ -270,19 +270,6 @@ public class EventObservable implements LifecycleObserver {
         rebindSubscriberOnResume = true;
     }
 
-    @SuppressWarnings("unchecked")
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    private void onStop() {
-        for (Map.Entry<Object, CompositeDisposable> entry : compositeDisposableMap.entrySet()) {
-            entry.getValue().dispose();
-            entry.setValue(new CompositeDisposable());
-        }
-        for (Map.Entry<Class<?>, Subject<? extends Event>> entry : subjects.entrySet()) {
-            ((Subject<Event>) entry.getValue()).onNext((IGNORE_EVENT));
-        }
-        rebindSubscriberOnResume = true;
-    }
-
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     private void onDestroy() {
         for (Map.Entry<Class<?>, Subject<? extends Event>> entry : subjects.entrySet()) {
