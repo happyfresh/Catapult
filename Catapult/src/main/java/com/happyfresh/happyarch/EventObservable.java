@@ -277,5 +277,6 @@ public class EventObservable implements LifecycleObserver {
         }
 
         eventObservables.remove(lifecycleOwner);
+        lifecycleOwner.getLifecycle().removeObserver(this);
     }
 }
