@@ -11,7 +11,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/Catapult" />
-            <option value="$PROJECT_DIR$/Usecase" />
+            <option value="$PROJECT_DIR$/UseCase" />
             <option value="$PROJECT_DIR$/app" />
           </set>
         </option>
