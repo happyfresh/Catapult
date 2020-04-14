@@ -1,6 +1,6 @@
 package com.happyfresh.happyarch;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public class NewInstanceProvider {
 

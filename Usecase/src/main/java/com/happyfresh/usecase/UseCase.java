@@ -1,7 +1,7 @@
 package com.happyfresh.usecase;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
