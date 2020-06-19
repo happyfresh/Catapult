@@ -15,7 +15,7 @@ public class ComponentProvider implements LifecycleObserver {
 
     private LifecycleOwner lifecycleOwner;
 
-    private Map<Class, ? super Component> componentMap = new HashMap<>();
+    private Map<View, ? super Component> componentMap = new HashMap<>();
 
     public ComponentProvider(LifecycleOwner lifecycleOwner) {
         this.lifecycleOwner = lifecycleOwner;
@@ -29,7 +29,7 @@ public class ComponentProvider implements LifecycleObserver {
 
     @SuppressWarnings("unchecked")
     public <T extends Component> T get(Class<T> componentClass, View view) {
-        T component = (T) componentMap.get(componentClass);
+        T component = (T) componentMap.get(view);
         if (component != null) {
             return component;
         }
@@ -37,7 +37,7 @@ public class ComponentProvider implements LifecycleObserver {
         try {
             Constructor constructor = componentClass.getConstructor(View.class, LifecycleOwner.class);
             component = (T) constructor.newInstance(view, lifecycleOwner);
-            componentMap.put(componentClass, component);
+            componentMap.put(view, component);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
