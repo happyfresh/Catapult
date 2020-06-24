@@ -28,6 +28,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Subscribe(Event.class)
+    public void subscribeEventForTestError(TestEvent testEvent) {
+        throw new RuntimeException("Test Runtime Exception");
+    }
+
+    @Subscribe(Event.class)
     public void subscribeEvent(TestEvent testEvent) {
         Toast.makeText(this, "Subscribe Event Normal " + toString(), Toast.LENGTH_LONG).show();
     }

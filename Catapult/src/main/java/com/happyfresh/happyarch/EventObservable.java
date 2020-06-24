@@ -1,12 +1,6 @@
 package com.happyfresh.happyarch;
 
 import android.annotation.SuppressLint;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.OnLifecycleEvent;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -14,6 +8,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.OnLifecycleEvent;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -29,6 +28,8 @@ public class EventObservable implements LifecycleObserver {
     @NonNull
     protected static Map<LifecycleOwner, EventObservable> eventObservables = new HashMap<>();
 
+    private static OnCatchExceptionListener sOnCatchExceptionListener;
+
     @NonNull
     protected Map<Class<?>, Subject<? extends Event>> subjects = new HashMap<>();
 
@@ -42,6 +43,10 @@ public class EventObservable implements LifecycleObserver {
     public EventObservable(@NonNull LifecycleOwner lifecycleOwner) {
         this.lifecycleOwner = lifecycleOwner;
         this.lifecycleOwner.getLifecycle().addObserver(this);
+    }
+
+    public static void setOnCatchExceptionListener(OnCatchExceptionListener onExceptionListener) {
+        sOnCatchExceptionListener = onExceptionListener;
     }
 
     public static EventObservable get(@NonNull LifecycleOwner lifecycleOwner) {
@@ -171,7 +176,9 @@ public class EventObservable implements LifecycleObserver {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                if (sOnCatchExceptionListener != null) {
+                    sOnCatchExceptionListener.onException(e.getCause());
+                }
             }
         }
 
@@ -278,5 +285,10 @@ public class EventObservable implements LifecycleObserver {
 
         eventObservables.remove(lifecycleOwner);
         lifecycleOwner.getLifecycle().removeObserver(this);
+    }
+
+    public interface OnCatchExceptionListener {
+
+        void onException(Throwable e);
     }
 }
