@@ -177,7 +177,7 @@ public class EventObservable implements LifecycleObserver {
                 }
             } catch (Exception e) {
                 if (sOnCatchExceptionListener != null) {
-                    sOnCatchExceptionListener.onException(e.getCause());
+                    sOnCatchExceptionListener.onException(new EventException(e.getCause(), entry.getKey(), event));
                 }
             }
         }
@@ -289,6 +289,6 @@ public class EventObservable implements LifecycleObserver {
 
     public interface OnCatchExceptionListener {
 
-        void onException(Throwable e);
+        void onException(EventException e);
     }
 }

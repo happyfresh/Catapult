@@ -11,7 +11,7 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         EventObservable.setOnCatchExceptionListener(e -> {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
         });
     }
 }
