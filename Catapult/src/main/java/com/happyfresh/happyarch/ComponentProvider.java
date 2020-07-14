@@ -37,7 +37,15 @@ public class ComponentProvider implements LifecycleObserver {
         try {
             Constructor constructor = componentClass.getConstructor(View.class, LifecycleOwner.class);
             component = (T) constructor.newInstance(view, lifecycleOwner);
+
             componentMap.put(view, component);
+
+            if (componentClass.isAnnotationPresent(Plugin.class)) {
+                Plugin plugin = componentClass.getAnnotation(Plugin.class);
+                for (Class<? extends ComponentPlugin<?>> pluginClass : plugin.value()) {
+                    ComponentPlugin.apply(pluginClass, component, lifecycleOwner);
+                }
+            }
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
