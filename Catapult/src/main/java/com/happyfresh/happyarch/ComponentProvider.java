@@ -8,7 +8,9 @@ import android.view.View;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ComponentProvider implements LifecycleObserver {
@@ -16,6 +18,8 @@ public class ComponentProvider implements LifecycleObserver {
     private LifecycleOwner lifecycleOwner;
 
     private Map<View, ? super Component> componentMap = new HashMap<>();
+
+    private Map<Component, List<ComponentPlugin>> pluginsMap = new HashMap<>();
 
     public ComponentProvider(LifecycleOwner lifecycleOwner) {
         this.lifecycleOwner = lifecycleOwner;
@@ -41,9 +45,15 @@ public class ComponentProvider implements LifecycleObserver {
             componentMap.put(view, component);
 
             if (componentClass.isAnnotationPresent(Plugin.class)) {
+                List<ComponentPlugin> plugins = pluginsMap.get(component);
+                if (plugins == null) {
+                    plugins = new ArrayList<>();
+                    pluginsMap.put(component, plugins);
+                }
+
                 Plugin plugin = componentClass.getAnnotation(Plugin.class);
                 for (Class<? extends ComponentPlugin<?>> pluginClass : plugin.value()) {
-                    ComponentPlugin.apply(pluginClass, component, lifecycleOwner);
+                    plugins.add(ComponentPlugin.apply(pluginClass, component, lifecycleOwner));
                 }
             }
         } catch (NoSuchMethodException e) {
@@ -62,6 +72,13 @@ public class ComponentProvider implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     private void onDestroy() {
         componentMap.clear();
+        for (Map.Entry<Component, List<ComponentPlugin>> entry : pluginsMap.entrySet()) {
+            for (ComponentPlugin  plugin : entry.getValue()) {
+                plugin.setComponent(null);
+            }
+            entry.getValue().clear();
+        }
+        pluginsMap.clear();
         ComponentProviders.sComponentProviderMap.remove(lifecycleOwner);
         lifecycleOwner = null;
     }

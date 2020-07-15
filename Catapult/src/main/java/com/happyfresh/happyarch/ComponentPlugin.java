@@ -1,35 +1,22 @@
 package com.happyfresh.happyarch;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-
 import androidx.lifecycle.LifecycleOwner;
 
 public class ComponentPlugin<T> {
 
     protected T component;
 
-    protected LifecycleOwner lifecycleOwner;
-
-    public ComponentPlugin(LifecycleOwner lifecycleOwner) {
-        this.lifecycleOwner = lifecycleOwner;
-    }
-
-    public static <T> void apply(Class<? extends ComponentPlugin<?>> pluginClass, T component,
-                                                               LifecycleOwner lifecycleOwner) {
+    public static <T> ComponentPlugin apply(Class<? extends ComponentPlugin<?>> pluginClass, T component,
+                                            LifecycleOwner lifecycleOwner) {
         try {
-            Constructor<? extends ComponentPlugin<?>> constructor = pluginClass.getConstructor(LifecycleOwner.class);
-            ComponentPlugin<T> plugin = (ComponentPlugin<T>) constructor.newInstance(lifecycleOwner);
+            ComponentPlugin<T> plugin = (ComponentPlugin<T>) pluginClass.newInstance();
             plugin.setComponent(component);
-            plugin.apply();
+            plugin.apply(lifecycleOwner);
+            return plugin;
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -37,7 +24,7 @@ public class ComponentPlugin<T> {
         this.component = component;
     }
 
-    public void apply() {
+    public void apply(LifecycleOwner lifecycleOwner) {
         EventObservable.bindSubscriber(this, EventObservable.get(lifecycleOwner));
     }
 }
