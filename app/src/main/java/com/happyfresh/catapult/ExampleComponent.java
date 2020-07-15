@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleOwner;
 
 @Plugin(TestComponentPlugin.class)
-public class ExampleComponent extends Component<ExampleUiView> implements TestComponent {
+public class ExampleComponent extends Component<ExampleUiView> implements TestComponent<String> {
 
     public ExampleComponent(@NonNull View view, @NonNull LifecycleOwner lifecycleOwner) {
         super(view, lifecycleOwner);
@@ -23,7 +23,7 @@ public class ExampleComponent extends Component<ExampleUiView> implements TestCo
     }
 
     @Override
-    public void onTestComponentLoaded(TestEvent event) {
-        getUiView().showToast();
+    public void onTestComponentLoaded(String data) {
+        getUiView().showToast(data);
     }
 }

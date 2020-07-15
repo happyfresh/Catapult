@@ -19,7 +19,7 @@ public class ComponentProvider implements LifecycleObserver {
 
     private Map<View, ? super Component> componentMap = new HashMap<>();
 
-    private Map<Component, List<ComponentPlugin>> pluginsMap = new HashMap<>();
+    private Map<Component, List<ComponentPlugin<?>>> pluginsMap = new HashMap<>();
 
     public ComponentProvider(LifecycleOwner lifecycleOwner) {
         this.lifecycleOwner = lifecycleOwner;
@@ -39,20 +39,20 @@ public class ComponentProvider implements LifecycleObserver {
         }
 
         try {
-            Constructor constructor = componentClass.getConstructor(View.class, LifecycleOwner.class);
+            Constructor<T> constructor = componentClass.getConstructor(View.class, LifecycleOwner.class);
             component = (T) constructor.newInstance(view, lifecycleOwner);
 
             componentMap.put(view, component);
 
             if (componentClass.isAnnotationPresent(Plugin.class)) {
-                List<ComponentPlugin> plugins = pluginsMap.get(component);
+                List<ComponentPlugin<?>> plugins = pluginsMap.get(component);
                 if (plugins == null) {
                     plugins = new ArrayList<>();
                     pluginsMap.put(component, plugins);
                 }
 
                 Plugin plugin = componentClass.getAnnotation(Plugin.class);
-                for (Class<? extends ComponentPlugin<?>> pluginClass : plugin.value()) {
+                for (Class pluginClass : plugin.value()) {
                     plugins.add(ComponentPlugin.apply(pluginClass, component, lifecycleOwner));
                 }
             }
@@ -72,8 +72,8 @@ public class ComponentProvider implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     private void onDestroy() {
         componentMap.clear();
-        for (Map.Entry<Component, List<ComponentPlugin>> entry : pluginsMap.entrySet()) {
-            for (ComponentPlugin  plugin : entry.getValue()) {
+        for (Map.Entry<Component, List<ComponentPlugin<?>>> entry : pluginsMap.entrySet()) {
+            for (ComponentPlugin<?>  plugin : entry.getValue()) {
                 plugin.setComponent(null);
             }
             entry.getValue().clear();

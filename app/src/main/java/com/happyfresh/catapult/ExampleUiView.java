@@ -15,7 +15,7 @@ public class ExampleUiView extends UiView {
         super(view, eventObservable);
     }
 
-    public void showToast() {
-        Toast.makeText(getContext(), "Subscribe TestComponentPlugin Event " + toString(), Toast.LENGTH_LONG).show();
+    public void showToast(String data) {
+        Toast.makeText(getContext(), "Subscribe TestComponentPlugin Event " + data, Toast.LENGTH_LONG).show();
     }
 }

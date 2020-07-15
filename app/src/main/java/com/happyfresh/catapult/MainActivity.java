@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btnEmit).setOnClickListener(v -> {
             EventObservable.emitAll(Event.class, new TestEvent());
+            EventObservable.emitAll(TestComponent.class, new PluginEvent<>(toString()));
         });
 
         findViewById(R.id.btnNextScreen).setOnClickListener(v -> {

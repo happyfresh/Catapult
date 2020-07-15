@@ -6,10 +6,11 @@ public class ComponentPlugin<T> {
 
     protected T component;
 
-    public static <T> ComponentPlugin apply(Class<? extends ComponentPlugin<?>> pluginClass, T component,
-                                            LifecycleOwner lifecycleOwner) {
+    @SuppressWarnings("unchecked")
+    public static <T, R extends ComponentPlugin<T>> R apply(Class<R> pluginClass, T component,
+                                                            LifecycleOwner lifecycleOwner) {
         try {
-            ComponentPlugin<T> plugin = (ComponentPlugin<T>) pluginClass.newInstance();
+            R plugin = pluginClass.newInstance();
             plugin.setComponent(component);
             plugin.apply(lifecycleOwner);
             return plugin;

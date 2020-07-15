@@ -1,6 +1,6 @@
 package com.happyfresh.catapult;
 
-public interface TestComponent {
+public interface TestComponent<T> {
 
-    void onTestComponentLoaded(TestEvent event);
+    void onTestComponentLoaded(T data);
 }

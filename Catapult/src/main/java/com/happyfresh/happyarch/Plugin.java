@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Plugin {
 
-    Class<? extends ComponentPlugin<?>>[] value();
+    Class<? extends ComponentPlugin>[] value();
 }
