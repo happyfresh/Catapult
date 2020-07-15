@@ -1,13 +1,15 @@
 package com.happyfresh.catapult;
 
 import android.content.Intent;
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.happyfresh.happyarch.ComponentProviders;
 import com.happyfresh.happyarch.Event;
 import com.happyfresh.happyarch.EventObservable;
 import com.happyfresh.happyarch.Subscribe;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btnNextScreen).setOnClickListener(v -> {
             startActivity(new Intent(this, MainActivity.class));
         });
+
+        ComponentProviders.of(this).get(ExampleComponent.class, findViewById(R.id.component_example));
     }
 
     @Subscribe(Event.class)
