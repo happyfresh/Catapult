@@ -54,5 +54,7 @@ public class ComponentProvider implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     private void onDestroy() {
         componentMap.clear();
+        ComponentProviders.sComponentProviderMap.remove(lifecycleOwner);
+        lifecycleOwner = null;
     }
 }

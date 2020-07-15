@@ -33,7 +33,6 @@ public class EventObservable implements LifecycleObserver {
     @NonNull
     protected Map<Class<?>, Subject<? extends Event>> subjects = new HashMap<>();
 
-    @NonNull
     private LifecycleOwner lifecycleOwner;
 
     private Map<Object, CompositeDisposable> compositeDisposableMap = new HashMap<>();
@@ -285,6 +284,9 @@ public class EventObservable implements LifecycleObserver {
 
         eventObservables.remove(lifecycleOwner);
         lifecycleOwner.getLifecycle().removeObserver(this);
+        subjects.clear();
+        compositeDisposableMap.clear();
+        lifecycleOwner = null;
     }
 
     public interface OnCatchExceptionListener {
